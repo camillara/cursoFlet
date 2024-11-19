@@ -1,31 +1,132 @@
 import flet as ft
+import random
+import string
+
+
+def letter_to_guess(letter):
+    return ft.Container(
+                bgcolor=ft.colors.AMBER_500,
+                height=50,
+                width=50,
+                border_radius=ft.border_radius.all(5),
+                content=ft.Text(
+                    value=letter, 
+                    color=ft.colors.WHITE,
+                    size=30,
+                    text_align=ft.TextAlign.CENTER,
+                    weight=ft.FontWeight.BOLD
+                ),
+            )
+
 
 def main(page: ft.Page):
-    page.title = 'Contador'
-    page.vertical_alignment = 'center'
+    page.scroll = ft.ScrollMode.AUTO
+    page.bgcolor = ft.colors.BROWN_600
 
-    text_number = ft.TextField(value='0', text_align=ft.TextAlign.CENTER, width=100)
+    available_words = ['python','flet','programador','aventureiro']
+    choiced = random.choice(available_words).upper()
 
-    def minus_click(e):
-        text_number.value = str(int(text_number.value) - 1)
-        text_number.update()
 
-    def sum_click(e):
-        text_number.value = str(int(text_number.value) + 1)
-        text_number.update()
+    def validate_letter(e):
+        for pos, letter in enumerate(choiced):
+            if e.control.content.value == letter:
+                word.controls[pos] = letter_to_guess(letter=letter)
+                word.update()
 
-    page.add(
-        ft.Row(
-            controls=[
-                ft.IconButton(icon=ft.icons.REMOVE, on_click=minus_click),
-                text_number,
-                ft.IconButton(icon=ft.icons.ADD, on_click=sum_click),
-            ],
+        if e.control.content.value not in choiced:
+            victim.data += 1
+            
+            if victim.data > 7:
+                page.dialog = ft.AlertDialog(title=ft.Text('Você perdeu! :('), open=True)
+                page.update()
+
+            errors = victim.data
+            victim.src = f'images/hangman_{errors}.png'
+            victim.update()
+
+
+        e.control.disabled = True
+        e.control.gradient = ft.LinearGradient(colors=[ft.colors.GREY])
+        e.control.update()
+
+
+    victim = ft.Image(
+        data=0,
+        src = 'images/hangman_0.png',
+        repeat= ft.ImageRepeat.NO_REPEAT,
+        height=300,
+    )
+
+    word = ft.Row(
+        alignment=ft.MainAxisAlignment.CENTER,
+        wrap=True,
+        controls=[letter_to_guess('_') for letter in choiced]
+    )
+
+    game = ft.Container(
+        col={'xs': 12, 'lg': 6},
+        padding=ft.padding.all(50),
+        content=ft.Column(
             alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                victim,
+                word,
+            ]
         )
     )
 
-    page.update()
+    keyboard = ft.Container(
+        col={'xs': 12, 'lg': 6},
+        image_src= 'images/keyboard.png',
+        image_repeat= ft.ImageRepeat.NO_REPEAT,
+        image_fit= ft.ImageFit.FILL,
+        padding=ft.padding.only(top=150, left=80, right=80, bottom=50),
+        content=ft.Row(
+            wrap=True,
+            alignment=ft.MainAxisAlignment.CENTER,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Container(
+                    # bgcolor=ft.colors.AMBER,
+                    height=50,
+                    width=50,
+                    border_radius=ft.border_radius.all(5),
+                    content=ft.Text(
+                        value=letter, 
+                        color=ft.colors.WHITE,
+                        size=30,
+                        text_align=ft.TextAlign.CENTER,
+                        weight=ft.FontWeight.BOLD
+                    ),
+                    gradient=ft.LinearGradient(
+                        begin=ft.alignment.top_center,
+                        end=ft.alignment.bottom_center,
+                        colors=[ft.colors.AMBER, ft.colors.DEEP_ORANGE]
+                    ),
+                    on_click=validate_letter,
+                )
+            for letter in string.ascii_uppercase],
+        )
+    )
+
+    scene = ft.Image(col=12, src = 'images/scene.png')
+
+    layout = ft.ResponsiveRow(
+        columns=12,
+        controls=[
+            scene,
+            game,
+            keyboard,
+            scene,
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+    )
+
+    
+    page.add(layout)
 
 
-ft.app(target=main)
+if __name__ == '__main__':
+    ft.app(target = main, view = ft.AppView.FLET_APP, assets_dir= 'assets')
